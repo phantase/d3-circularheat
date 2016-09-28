@@ -19,7 +19,14 @@ function circularHeatChart() {
 
             var autoDomain = false;
             if (domain === null) {
-                domain = d3.extent(data, accessor);
+                // Manage NoData (at this stage for us, NoData means the value is null)
+                var data_wonodata = [];
+                for (var i = data.length - 1; i >= 0; i--) {
+                    if( accessor(data[i]) ) {
+                        data_wonodata[i] = accessor(data[i]);
+                    }
+                }
+                domain = d3.extent(data_wonodata);
                 autoDomain = true;
             }
             var color = d3.scale.linear().domain(domain).range(range);
@@ -29,7 +36,12 @@ function circularHeatChart() {
             g.selectAll("path").data(data)
                 .enter().append("path")
                 .attr("d", d3.svg.arc().innerRadius(ir).outerRadius(or).startAngle(sa).endAngle(ea))
-                .attr("fill", function(d) {return color(accessor(d));});
+                .attr("fill", function(d) {
+                    if( accessor(d) ){
+                        return color(accessor(d));
+                    } else {
+                        return '#000000';
+                    }});
 
 
             // Unique id so that the text path defs are unique - is there a better way to do this?
@@ -49,7 +61,7 @@ function circularHeatChart() {
                 .attr("id", function(d, i) {return "radial-label-path-"+id+"-"+i;})
                 .attr("d", function(d, i) {
                     var r = innerRadius + ((i + 0.2) * segmentHeight);
-                    return "m" + r * Math.sin(lsa) + " -" + r * Math.cos(lsa) + 
+                    return "m" + r * Math.sin(lsa) + " -" + r * Math.cos(lsa) +
                             " a" + r + " " + r + " 0 1 1 -1 0";
                 });
 
